@@ -1,0 +1,13 @@
+{
+  "name": "pr-tracker",
+  "description": "Claude Code mod: a small box showing the pull request for the current branch",
+  "owner": {
+    "name": "Ram Pata"
+  },
+  "plugins": [
+    {
+      "name": "pr-tracker",
+      "source": "./"
+    }
+  ]
+}
