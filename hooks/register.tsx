@@ -123,7 +123,7 @@ export const register: Register = on => {
 
     const { Box, Text, Button } = $.ui.resolve(e)
     const loading = await read($, isLoading)
-    const columns = e.viewport?.columns ?? 120
+    const columns = (e.viewport?.columns ?? 120) - 4
     const sep = <Text dimColor> │ </Text>
     const refreshButton = (
       <Box flexShrink={0}>
@@ -132,7 +132,7 @@ export const register: Register = on => {
     )
     const repoLabel = columns >= 110 && (
       <Box flexShrink={0}>
-        <Text color="claude" bold> {current.repo}</Text>
+        <Text color="claude" bold>{current.repo}</Text>
         {sep}
       </Box>
     )
@@ -141,11 +141,11 @@ export const register: Register = on => {
       const isWarning = current.kind === 'no-gh'
 
       return (
-        <Box width="100%">
+        <Box width="100%" borderStyle="round" borderColor={isWarning ? 'warning' : 'inactive'} paddingX={1}>
           {repoLabel}
           <Box flexGrow={1} flexShrink={1}>
             <Text wrap="truncate-end">
-              <Text color="suggestion"> {current.branch}</Text>
+              <Text color="suggestion">{current.branch}</Text>
               <Text dimColor> · </Text>
               {isWarning ? (
                 <Text color="warning">⚠ {current.reason}</Text>
@@ -178,8 +178,10 @@ export const register: Register = on => {
     const { passed, failed, pending } = pr.checks
     const hasChecks = passed + failed + pending > 0
 
+    const borderColor = failed > 0 ? 'error' : stateColor
+
     return (
-      <Box width="100%">
+      <Box width="100%" borderStyle="round" borderColor={borderColor} paddingX={1}>
         {repoLabel}
         <Box flexShrink={0}>
           <Text bold color="text">#{pr.number}</Text>
@@ -213,7 +215,7 @@ export const register: Register = on => {
           {sep}
           <Text color="diffAdded">+{pr.additions}</Text>
           <Text color="diffRemoved"> −{pr.deletions}</Text>
-          <Text> </Text>
+          <Text>  </Text>
         </Box>
         {refreshButton}
       </Box>

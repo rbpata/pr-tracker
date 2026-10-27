@@ -3,7 +3,9 @@
 A Claude Code mod that keeps a one-line strip, the full width of the terminal, just above the prompt, showing the pull request for the branch you are on in the current repository. It reads the PR with the GitHub CLI and refreshes when the session starts, after each turn, and every 60 seconds.
 
 ```
- rbpata/repo │ #123 ● OPEN │ Fix the login redirect…  │ feat/login → main │ ✓5 ✗1 ◷2 │ ✓ approved │ +120 −30  ↻
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ rbpata/repo │ #123 ● OPEN │ Fix the login redirect…  │ feat/login → main │ ✓5 ✗1 ◷2 │ ✓ approved │ +120 −30  ↻ │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 > your prompt
 ```
 What it shows:
@@ -12,6 +14,7 @@ What it shows:
 - the PR number, state (open, draft, merged, closed) and lines added/removed
 - the PR title, and the head branch → base branch
 - CI checks passed, failed and pending, and the review decision
+- the border is green for an open PR, red when a check fails, purple once merged, grey for drafts
 - on narrow terminals the repo and branches drop out first and the title truncates; on a branch with no PR it says so, and outside a git repository it hides
 
 Collapse it with `ctrl+x ctrl+a`.
