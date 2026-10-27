@@ -12,7 +12,6 @@ const isLoading = atom({ plugin: 'pr-tracker', key: 'isLoading' } as const, fals
 
 const POLL_MS = 60_000
 const MIN_GAP_MS = 10_000
-const WIDTH = 46
 const FIELDS =
   'number,title,url,state,isDraft,baseRefName,reviewDecision,statusCheckRollup,additions,deletions,changedFiles'
 
@@ -122,109 +121,101 @@ export const register: Register = on => {
     const current = await read($, view)
     if (e.props.hasSurvey || current.kind === 'none') return next(e)
 
-    const { Box, Text, Button, Link } = $.ui.resolve(e)
+    const { Box, Text, Button } = $.ui.resolve(e)
     const loading = await read($, isLoading)
-    const width = Math.min(WIDTH, Math.max(28, e.viewport?.columns ?? WIDTH))
-    const inner = width - 4
-
-    const header = (
-      <Box justifyContent="space-between">
-        <Text color="claude" bold>
-           {truncate(current.repo, inner - 4)}
-        </Text>
+    const columns = e.viewport?.columns ?? 120
+    const sep = <Text dimColor> │ </Text>
+    const refreshButton = (
+      <Box flexShrink={0}>
         <Button key="refresh" label={loading ? '…' : '↻'} onPress={() => refresh($, true)} />
       </Box>
     )
+    const repoLabel = columns >= 110 && (
+      <Box flexShrink={0}>
+        <Text color="claude" bold> {current.repo}</Text>
+        {sep}
+      </Box>
+    )
 
-    let body
-    let border = 'subtle'
+    if (current.kind !== 'pr') {
+      const isWarning = current.kind === 'no-gh'
 
-    if (current.kind === 'no-pr') {
-      body = (
-        <Box flexDirection="column">
-          <Text>
-            <Text color="suggestion"> {truncate(current.branch, inner - 2)}</Text>
-          </Text>
-          <Text dimColor>No pull request for this branch</Text>
-        </Box>
-      )
-    } else if (current.kind === 'no-gh') {
-      border = 'warning'
-      body = (
-        <Box flexDirection="column">
-          <Text color="suggestion"> {truncate(current.branch, inner - 2)}</Text>
-          <Text color="warning">⚠ {current.reason}</Text>
-        </Box>
-      )
-    } else {
-      const { pr } = current
-      const [stateLabel, stateColor] = pr.isDraft
-        ? ['DRAFT', 'inactive']
-        : pr.state === 'MERGED'
-          ? ['MERGED', 'merged']
-          : pr.state === 'CLOSED'
-            ? ['CLOSED', 'error']
-            : ['OPEN', 'success']
-      const [reviewLabel, reviewColor] =
-        pr.review === 'APPROVED'
-          ? ['✓ approved', 'success']
-          : pr.review === 'CHANGES_REQUESTED'
-            ? ['✗ changes requested', 'error']
-            : pr.review === 'REVIEW_REQUIRED'
-              ? ['◷ review required', 'warning']
-              : ['· no review', 'inactive']
-      const { passed, failed, pending } = pr.checks
-      const hasChecks = passed + failed + pending > 0
-      border = failed > 0 ? 'error' : stateColor
-
-      body = (
-        <Box flexDirection="column">
-          <Box justifyContent="space-between">
-            <Text>
-              <Link href={pr.url}>
-                <Text bold color="text">#{pr.number}</Text>
-              </Link>{' '}
-              <Text color={stateColor} bold>● {stateLabel}</Text>
-            </Text>
-            <Text>
-              <Text color="diffAdded">+{pr.additions}</Text>{' '}
-              <Text color="diffRemoved">−{pr.deletions}</Text>
+      return (
+        <Box width="100%">
+          {repoLabel}
+          <Box flexGrow={1} flexShrink={1}>
+            <Text wrap="truncate-end">
+              <Text color="suggestion"> {current.branch}</Text>
+              <Text dimColor> · </Text>
+              {isWarning ? (
+                <Text color="warning">⚠ {current.reason}</Text>
+              ) : (
+                <Text dimColor>no pull request for this branch</Text>
+              )}
             </Text>
           </Box>
-          <Text wrap="truncate-end">{pr.title}</Text>
-          <Text>
-            <Text color="suggestion">{truncate(current.branch, Math.floor(inner / 2))}</Text>
-            <Text dimColor> → </Text>
-            <Text color="suggestion">{pr.base}</Text>
-          </Text>
-          <Box justifyContent="space-between">
-            {hasChecks ? (
-              <Text>
-                <Text color="success">✓{passed}</Text>{' '}
-                <Text color={failed ? 'error' : 'inactive'}>✗{failed}</Text>{' '}
-                <Text color={pending ? 'warning' : 'inactive'}>◷{pending}</Text>
-              </Text>
-            ) : (
-              <Text dimColor>no checks</Text>
-            )}
-            <Text color={reviewColor}>{reviewLabel}</Text>
-          </Box>
+          {refreshButton}
         </Box>
       )
     }
 
+    const { pr } = current
+    const [stateLabel, stateColor] = pr.isDraft
+      ? ['DRAFT', 'inactive']
+      : pr.state === 'MERGED'
+        ? ['MERGED', 'merged']
+        : pr.state === 'CLOSED'
+          ? ['CLOSED', 'error']
+          : ['OPEN', 'success']
+    const [reviewLabel, reviewColor] =
+      pr.review === 'APPROVED'
+        ? ['✓ approved', 'success']
+        : pr.review === 'CHANGES_REQUESTED'
+          ? ['✗ changes requested', 'error']
+          : pr.review === 'REVIEW_REQUIRED'
+            ? ['◷ review required', 'warning']
+            : ['· no review', 'inactive']
+    const { passed, failed, pending } = pr.checks
+    const hasChecks = passed + failed + pending > 0
+
     return (
-      <Box justifyContent="flex-end">
-        <Box
-          flexDirection="column"
-          width={width}
-          borderStyle="round"
-          borderColor={border}
-          paddingX={1}
-        >
-          {header}
-          {body}
+      <Box width="100%">
+        {repoLabel}
+        <Box flexShrink={0}>
+          <Text bold color="text">#{pr.number}</Text>
+          <Text color={stateColor} bold> ● {stateLabel}</Text>
+          {sep}
         </Box>
+        <Box flexGrow={1} flexShrink={1} minWidth={10}>
+          <Text wrap="truncate-end">{pr.title}</Text>
+        </Box>
+        {columns >= 90 && (
+          <Box flexShrink={0}>
+            {sep}
+            <Text color="suggestion">{truncate(current.branch, 24)}</Text>
+            <Text dimColor> → </Text>
+            <Text color="suggestion">{pr.base}</Text>
+          </Box>
+        )}
+        <Box flexShrink={0}>
+          {sep}
+          {hasChecks ? (
+            <Text>
+              <Text color="success">✓{passed}</Text>{' '}
+              <Text color={failed ? 'error' : 'inactive'}>✗{failed}</Text>{' '}
+              <Text color={pending ? 'warning' : 'inactive'}>◷{pending}</Text>
+            </Text>
+          ) : (
+            <Text dimColor>no checks</Text>
+          )}
+          {sep}
+          <Text color={reviewColor}>{reviewLabel}</Text>
+          {sep}
+          <Text color="diffAdded">+{pr.additions}</Text>
+          <Text color="diffRemoved"> −{pr.deletions}</Text>
+          <Text> </Text>
+        </Box>
+        {refreshButton}
       </Box>
     )
   })
